@@ -34,9 +34,6 @@ class SearchEventViewModel @Inject constructor(
     private val _loading = mutableStateOf(false)
     val loading: State<Boolean> = _loading
 
-    private val _searchSettingsVisibility = mutableStateOf(false)
-    val searchSettingsVisibility: State<Boolean> = _searchSettingsVisibility
-
     private val _page = mutableStateOf(PAGE_START)
     val page: State<Int> = _page
 
@@ -56,34 +53,33 @@ class SearchEventViewModel @Inject constructor(
     fun onExecuteSearch() = viewModelScope.launch {
         onTabSelected(TabPage.Events)
         _loading.value = true
-        if (_query.value.isNotEmpty()) {
-            resetSearchState()
+        resetSearchState()
 
-            // Adding a delay to prevent throttling the github api
-            // TODO Build a better solution
-            delay(1000)
+        // Adding a delay to prevent throttling the github api
+        // TODO Build a better solution
+        delay(1000)
 
-            when (val response = repository.search(
-                apikey = API_KEY,
-                keyword = _query.value,
-                page = _page.value,
-                sizePerPage = PAGE_SIZE
-            )) {
-                is RepoResponse.Success -> {
-                    _events.value = response.data
-                    _hasError.value = false
-                }
-                is RepoResponse.Failed -> {
-                    // Handle server error
-                    _hasError.value = true
-                }
-                is RepoResponse.Error -> {
-                    response.error.printStackTrace()
-                    // Handle internet issue
-                    _hasError.value = true
-                }
+        when (val response = repository.search(
+            apikey = API_KEY,
+            keyword = _query.value,
+            page = _page.value,
+            sizePerPage = PAGE_SIZE
+        )) {
+            is RepoResponse.Success -> {
+                _events.value = response.data
+                _hasError.value = false
+            }
+            is RepoResponse.Failed -> {
+                // Handle server error
+                _hasError.value = true
+            }
+            is RepoResponse.Error -> {
+                response.error.printStackTrace()
+                // Handle internet issue
+                _hasError.value = true
             }
         }
+
         _loading.value = false
     }
 
@@ -127,11 +123,6 @@ class SearchEventViewModel @Inject constructor(
     fun onChangeListScrollPosition(position: Int) {
         listScrollPosition = position
     }
-
-    fun showSearchSettings(visibility: Boolean) {
-        _searchSettingsVisibility.value = visibility
-    }
-
 
     fun onUpdateFavoriteEvents(isFavorite: Boolean, event: Event) = viewModelScope.launch {
         event.isFavorite = isFavorite
